@@ -255,11 +255,12 @@ const ExamTimetableGenerator = () => {
 
         {/* Search Section */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Search Your Schedule</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Search by Your Roll Number</h2>
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="Enter your name or roll number..."
+              // placeholder="Enter your name or roll number..."
+              placeholder="Enter your roll number..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && searchStudent()}
@@ -325,7 +326,7 @@ const ExamTimetableGenerator = () => {
                   }`}
                 >
                   {showClassrooms ? <EyeOff size={20} /> : <Eye size={20} />}
-                  {showClassrooms ? 'Hide Details' : 'Show Details'}
+                  {showClassrooms ? 'Hide Venue' : 'Show Venue'}
                 </button>
                 <button
                   onClick={exportToPNG}
@@ -383,15 +384,15 @@ const ExamTimetableGenerator = () => {
                   style={{ backgroundColor: exam.color }}
                 >
                   <span className="text-gray-800 font-bold">{exam.courseName}</span>
-                  <span className="text-gray-700 text-xs">{exam.courseCode}</span>
-                  <span className="text-gray-600 text-xs">Slot: {exam.slot}</span>
+                  {/* <span className="text-gray-700 text-xs">{exam.courseCode}</span> */}
+                  {/* <span className="text-gray-600 text-xs">Slot: {exam.slot}</span> */}
                   {showClassrooms && (
                     <>
                       {exam.classroom && (
                         <span className="text-gray-600 text-xs">Room: {exam.classroom}</span>
                       )}
                       {exam.instructor && (
-                        <span className="text-gray-600 text-xs">{exam.instructor}</span>
+                        <span className="text-gray-600 text-xs">Not Finalised Yet</span>
                       )}
                     </>
                   )}
