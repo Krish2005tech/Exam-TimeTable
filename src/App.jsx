@@ -1,22 +1,36 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Edit2, Check, Download, Eye, EyeOff, Search } from 'lucide-react';
+import { X, Edit2, Check, Download, Eye, EyeOff, Search ,AlertCircle,Plus} from 'lucide-react';
 import * as htmlToImage from "html-to-image";
 
+const removeNumbers = (text = "") => text.replace(/\d+/g, "");
 const ExamTimetableGenerator = () => {
   const timetableRef = useRef(null);
   const [examData, setExamData] = useState([]);
   const [dates, setDates] = useState({});
   const [slotTiming, setSlotTiming] = useState({});
   const [studentExams, setStudentExams] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  let [searchTerm, setSearchTerm] = useState('');
   const [studentInfo, setStudentInfo] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [showClassrooms, setShowClassrooms] = useState(true);
+  const [showModal, showModalState] = useState(false);
+  const [clashMessage, setClashMessage] = useState('');
 
   const colors = [
     '#E3F2FD', '#E8F5E9', '#F3E5F5', '#FFF9C4', '#FFECB3', 
     '#FFCDD2', '#F0F4C3', '#FFF3E0', '#E0E0E0', '#FFEBEE'
   ];
+
+const removeNumbersFromKeys = (obj = {}) =>
+  Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => [
+      key.replace(/\d+/g, ""),
+      value
+    ])
+  );
+
+
+
 
   useEffect(() => {
     fetch("/exam_schedule.json")
@@ -29,20 +43,34 @@ const ExamTimetableGenerator = () => {
       .then((data) => {
         setExamData(data.exams || []);
         setDates(data.dates || {});
-        setSlotTiming(data.slotTiming || {});
+        setSlotTiming(removeNumbersFromKeys(data.slotTiming) || {});
       })
       .catch((error) => {
         console.error("Error loading exam schedule:", error);
+        showModalState(true);
+        setClashMessage("Error loading exam schedule data. Please try again later.");
       });
   }, []);
 
-  const searchStudent = () => {
+  const searchStudent = (Roll_from_name_search="") => {
     if (!searchTerm.trim()) return;
+    searchTerm=searchTerm.trim();
+    let studentExamsList={};
+    if(Roll_from_name_search !== ""){
 
-    const studentExamsList = examData.filter(exam => 
-      exam.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exam.rollNo.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+      studentExamsList = examData.filter(exam => 
+        // exam.studentName.toLowerCase() === searchTerm.toLowerCase() ||
+        exam.rollNo.toLowerCase() === Roll_from_name_search
+      );
+      // filteredExams={}
+      setSearchTerm("")
+    }
+    else{
+      studentExamsList = examData.filter(exam => 
+        exam.studentName.toLowerCase() === searchTerm.toLowerCase() ||
+        exam.rollNo.toLowerCase() === searchTerm.toLowerCase()
+      );
+  }
 
     if (studentExamsList.length > 0) {
       const student = studentExamsList[0];
@@ -65,7 +93,9 @@ const ExamTimetableGenerator = () => {
     } else {
       setStudentInfo(null);
       setStudentExams([]);
-      alert('No exam records found for this student');
+      // alert('No exam records found for this student');
+      showModalState(true);
+      setClashMessage("No exam records found for this student.");
     }
   };
 
@@ -175,8 +205,9 @@ const ExamTimetableGenerator = () => {
 
   // Fill timetable with exams
   studentExams.forEach(exam => {
-    if (exam.slot && slotTiming[exam.slot]) {
-      const slotInfo = slotTiming[exam.slot];
+    if (exam.slot && slotTiming[removeNumbers(exam.slot)]) {
+
+      const slotInfo = slotTiming[removeNumbers(exam.slot)];
       const key = `${exam.date}-${slotInfo.start}-${slotInfo.end}`;
       if (timetable[key]) {
         timetable[key].push(exam);
@@ -243,6 +274,12 @@ const ExamTimetableGenerator = () => {
     }
   };
 
+  const filteredExams = examData.filter(exam => 
+    exam.studentName.toLowerCase().includes(searchTerm.toLowerCase()) 
+    // || exam.rollNo.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  // console.log("Filtered Exams:", filteredExams);
+
   const { sortedDates, timeSlots, timetable } = generateTimetable();
 
   return (
@@ -255,12 +292,12 @@ const ExamTimetableGenerator = () => {
 
         {/* Search Section */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Search by Your Roll Number</h2>
-          <div className="flex gap-2">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Search Your Minor Exam Schedule</h2>
+          <div className="flex gap-2 sm:flex-row flex-col">
             <input
               type="text"
-              // placeholder="Enter your name or roll number..."
-              placeholder="Enter your roll number..."
+              placeholder="Enter your name or roll number..."
+              // placeholder="Enter your roll number..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && searchStudent()}
@@ -268,7 +305,7 @@ const ExamTimetableGenerator = () => {
             />
             <button
               onClick={searchStudent}
-              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition flex items-center gap-2"
+              className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition flex items-center gap-2 justify-center"
             >
               <Search size={20} /> Search
             </button>
@@ -281,12 +318,41 @@ const ExamTimetableGenerator = () => {
                 <p><span className="font-semibold">Name:</span> {studentInfo.name}</p>
                 <p><span className="font-semibold">Roll No:</span> {studentInfo.rollNo}</p>
                 <p><span className="font-semibold">Email:</span> {studentInfo.email}</p>
-                <p><span className="font-semibold">Department:</span> {studentInfo.department}</p>
+                {/* <p><span className="font-semibold">Department:</span> {studentInfo.department}</p> */}
                 <p><span className="font-semibold">Program:</span> {studentInfo.program}</p>
               </div>
             </div>
           )}
         </div>
+
+
+           {searchTerm && filteredExams.length > 0 && searchTerm.length>4 && (
+                      <div className="bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                        {filteredExams.map(exam => {
+                          // const timeDisplay = exam.schedule && exam.schedule.length > 0
+                          //   ? `${exam.schedule[0].start}-${exam.schedule[0].end}`
+                          //   : 'No schedule';
+          
+                          return (
+                            <div
+                              key={exam.id}
+                              className="p-4 border-b hover:bg-gray-100 cursor-pointer transition flex justify-between items-center"
+                              // onClick={() => addCourseToTimetable(exam)}
+                              onClick={() => searchStudent(exam.rollNo.toLowerCase())}
+                            >
+                              <div>
+                                <p className="font-semibold text-gray-800">{exam.studentName}</p>
+                                <p className="text-sm text-gray-600">
+                                  {/* {exam.code} • {exam.slot} {exam.credits && `• ${exam.credits} Credits`} {exam.Instructor && `• ${exam.Instructor}`} */}
+                                  {exam.rollNo}
+                                </p>
+                              </div>
+                              <Plus className="text-green-500" size={20} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
         {/* Subject List */}
         {studentExams.length > 0 && (
@@ -339,14 +405,14 @@ const ExamTimetableGenerator = () => {
             <div ref={timetableRef} className="bg-white">
               <table className="w-full border-collapse">
                 <thead>
-                  <tr className="bg-purple-100">
-                    <th className="border border-gray-300 p-3 text-gray-800 font-semibold text-center w-32">Time Slot</th>
+                  <tr className="bg-gray-200">
+                    <th className="border border-gray-400 p-3 text-gray-800 font-semibold text-center w-32">Time Slot</th>
                     {sortedDates.map(date => (
-                      <th key={date} className="border border-gray-300 p-3 text-gray-800 font-semibold text-center">
+                      <th key={date} className="border border-gray-400 p-3 text-gray-800 font-semibold text-center">
                         <div className="flex flex-col">
-                          <span className="text-sm">Day {dates[date]}</span>
-                          <span className="text-xs">{new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
                           <span className="font-bold">{new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          <span className="text-xs">{new Date(date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                          {/* <span className="text-sm">Day {dates[date]}</span> */}
                         </div>
                       </th>
                     ))}
@@ -410,6 +476,24 @@ const ExamTimetableGenerator = () => {
           </div>
         )}
       </div>
+
+        {showModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md">
+                  <div className="flex items-center gap-3 mb-4">
+                    <AlertCircle className="text-red-500" size={28} />
+                    <h3 className="text-xl font-bold text-gray-800">Schedule Conflict</h3>
+                  </div>
+                  <p className="text-gray-600 mb-6">{clashMessage}</p>
+                  <button
+                    onClick={() => showModalState(false)}
+                    className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
     </div>
   );
 };
@@ -418,7 +502,7 @@ function ExamRow({ exam, colors, slotTiming, dates, isEditing, onEdit, onUpdate,
   const [courseName, setCourseName] = useState(exam.courseName);
   const [courseCode, setCourseCode] = useState(exam.courseCode);
   const [date, setDate] = useState(exam.date);
-  const [slot, setSlot] = useState(exam.slot);
+  const [slot, setSlot] = useState(removeNumbers(exam.slot));
   const [classroom, setClassroom] = useState(exam.classroom || '');
   const [instructor, setInstructor] = useState(exam.instructor || '');
   const [color, setColor] = useState(exam.color);
@@ -449,14 +533,14 @@ function ExamRow({ exam, colors, slotTiming, dates, isEditing, onEdit, onUpdate,
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-sm"
             />
           </div>
-          <div>
+          {/* <div>
             <label className="text-xs font-semibold text-gray-600 block mb-2">Course Code</label>
             <input
               value={courseCode}
               onChange={(e) => setCourseCode(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-sm"
             />
-          </div>
+          </div> */}
           <div>
             <label className="text-xs font-semibold text-gray-600 block mb-2">Date</label>
             <select
@@ -493,14 +577,14 @@ function ExamRow({ exam, colors, slotTiming, dates, isEditing, onEdit, onUpdate,
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-sm"
             />
           </div>
-          <div>
+          {/* <div>
             <label className="text-xs font-semibold text-gray-600 block mb-2">Instructor</label>
             <input
               value={instructor}
               onChange={(e) => setInstructor(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none text-sm"
             />
-          </div>
+          </div> */}
         </div>
 
         <div className="mb-4">
@@ -535,7 +619,7 @@ function ExamRow({ exam, colors, slotTiming, dates, isEditing, onEdit, onUpdate,
     );
   }
 
-  const slotInfo = slotTiming[exam.slot];
+  const slotInfo = slotTiming[removeNumbers(exam.slot)];
   const timing = slotInfo ? `${slotInfo.start} - ${slotInfo.end}` : '';
 
   return (
