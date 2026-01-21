@@ -80,68 +80,112 @@ const ExamTimetableGenerator = () => {
     setStudentExams(studentExams.filter(exam => exam.id !== id));
   };
 
-  const generateTimetable = () => {
-    // Get sorted dates
-    const sortedDates = Object.keys(dates).sort();
+  // const generateTimetable = () => {
+  //   // Get sorted dates
+  //   const sortedDates = Object.keys(dates).sort();
     
-    // Group slots by day and time
-    const slotsByDayTime = {};
-    Object.entries(slotTiming).forEach(([slotName, slotInfo]) => {
-      const key = `${slotInfo.day}-${slotInfo.start}`;
-      if (!slotsByDayTime[key]) {
-        slotsByDayTime[key] = {
-          day: slotInfo.day,
-          start: slotInfo.start,
-          end: slotInfo.end,
-          slots: []
-        };
+  //   // Group slots by day and time
+  //   const slotsByDayTime = {};
+  //   Object.entries(slotTiming).forEach(([slotName, slotInfo]) => {
+  //     const key = `${slotInfo.day}-${slotInfo.start}`;
+  //     if (!slotsByDayTime[key]) {
+  //       slotsByDayTime[key] = {
+  //         day: slotInfo.day,
+  //         start: slotInfo.start,
+  //         end: slotInfo.end,
+  //         slots: []
+  //       };
+  //     }
+  //     slotsByDayTime[key].slots.push(slotName);
+  //   });
+
+  //   // Get unique time slots sorted by start time
+  //   const uniqueTimeSlots = Object.values(slotsByDayTime).sort((a, b) => {
+  //     if (a.day !== b.day) return a.day - b.day;
+  //     return timeToMinutes(a.start) - timeToMinutes(b.start);
+  //   });
+
+  //   // Remove duplicates based on day and time
+  //   const timeSlots = [];
+  //   const seen = new Set();
+  //   uniqueTimeSlots.forEach(slot => {
+  //     const key = `${slot.day}-${slot.start}-${slot.end}`;
+  //     if (!seen.has(key)) {
+  //       seen.add(key);
+  //       timeSlots.push(slot);
+  //     }
+  //   });
+
+  //   // Build timetable
+  //   const timetable = {};
+  //   sortedDates.forEach(date => {
+  //     const dayNum = dates[date];
+  //     timeSlots.forEach(timeSlot => {
+  //       if (timeSlot.day === dayNum) {
+  //         const key = `${date}-${timeSlot.start}-${timeSlot.end}`;
+  //         timetable[key] = [];
+  //       }
+  //     });
+  //   });
+
+  //   // Fill timetable with exams
+  //   studentExams.forEach(exam => {
+  //     if (exam.slot && slotTiming[exam.slot]) {
+  //       const slotInfo = slotTiming[exam.slot];
+  //       const key = `${exam.date}-${slotInfo.start}-${slotInfo.end}`;
+  //       if (timetable[key]) {
+  //         timetable[key].push(exam);
+  //       }
+  //     }
+  //   });
+
+  //   return { sortedDates, timeSlots, timetable };
+  // };
+
+
+  const generateTimetable = () => {
+  // Get sorted dates
+  const sortedDates = Object.keys(dates).sort();
+  
+  // Get unique time slots (regardless of day)
+  const uniqueTimeSlotsMap = {};
+  Object.entries(slotTiming).forEach(([slotName, slotInfo]) => {
+    const key = `${slotInfo.start}-${slotInfo.end}`;
+    if (!uniqueTimeSlotsMap[key]) {
+      uniqueTimeSlotsMap[key] = {
+        start: slotInfo.start,
+        end: slotInfo.end
+      };
+    }
+  });
+
+  // Convert to array and sort by start time
+  const timeSlots = Object.values(uniqueTimeSlotsMap).sort((a, b) => {
+    return timeToMinutes(a.start) - timeToMinutes(b.start);
+  });
+
+  // Build timetable
+  const timetable = {};
+  sortedDates.forEach(date => {
+    timeSlots.forEach(timeSlot => {
+      const key = `${date}-${timeSlot.start}-${timeSlot.end}`;
+      timetable[key] = [];
+    });
+  });
+
+  // Fill timetable with exams
+  studentExams.forEach(exam => {
+    if (exam.slot && slotTiming[exam.slot]) {
+      const slotInfo = slotTiming[exam.slot];
+      const key = `${exam.date}-${slotInfo.start}-${slotInfo.end}`;
+      if (timetable[key]) {
+        timetable[key].push(exam);
       }
-      slotsByDayTime[key].slots.push(slotName);
-    });
+    }
+  });
 
-    // Get unique time slots sorted by start time
-    const uniqueTimeSlots = Object.values(slotsByDayTime).sort((a, b) => {
-      if (a.day !== b.day) return a.day - b.day;
-      return timeToMinutes(a.start) - timeToMinutes(b.start);
-    });
-
-    // Remove duplicates based on day and time
-    const timeSlots = [];
-    const seen = new Set();
-    uniqueTimeSlots.forEach(slot => {
-      const key = `${slot.day}-${slot.start}-${slot.end}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        timeSlots.push(slot);
-      }
-    });
-
-    // Build timetable
-    const timetable = {};
-    sortedDates.forEach(date => {
-      const dayNum = dates[date];
-      timeSlots.forEach(timeSlot => {
-        if (timeSlot.day === dayNum) {
-          const key = `${date}-${timeSlot.start}-${timeSlot.end}`;
-          timetable[key] = [];
-        }
-      });
-    });
-
-    // Fill timetable with exams
-    studentExams.forEach(exam => {
-      if (exam.slot && slotTiming[exam.slot]) {
-        const slotInfo = slotTiming[exam.slot];
-        const key = `${exam.date}-${slotInfo.start}-${slotInfo.end}`;
-        if (timetable[key]) {
-          timetable[key].push(exam);
-        }
-      }
-    });
-
-    return { sortedDates, timeSlots, timetable };
-  };
-
+  return { sortedDates, timeSlots, timetable };
+};
   const timeToMinutes = (time) => {
     const match = time.match(/(\d+)(?::(\d+))?\s*(am|pm)/i);
     if (!match) return 0;
@@ -307,70 +351,59 @@ const ExamTimetableGenerator = () => {
                     ))}
                   </tr>
                 </thead>
-                <tbody>
-                  {timeSlots.map((timeSlot, index) => {
-                    const timingDisplay = `${timeSlot.start} - ${timeSlot.end}`;
-                    
-                    return (
-                      <tr key={index}>
-                        <td className="border border-gray-300 p-3 text-gray-700 font-semibold text-center bg-gray-50">
-                          <div className="flex flex-col">
-                            <span className="text-xs text-gray-600">{timingDisplay}</span>
-                          </div>
-                        </td>
-                        {sortedDates.map(date => {
-                          const dayNum = dates[date];
-                          
-                          // Only show cells for matching days
-                          if (timeSlot.day !== dayNum) {
-                            return (
-                              <td key={`${date}-${index}`} className="border border-gray-300 p-2 text-center min-h-20 bg-gray-100">
-                                <div className="text-gray-300">-</div>
-                              </td>
-                            );
-                          }
+<tbody>
+  {timeSlots.map((timeSlot, index) => {
+    const timingDisplay = `${timeSlot.start} - ${timeSlot.end}`;
+    
+    return (
+      <tr key={index}>
+        <td className="border border-gray-300 p-3 text-gray-700 font-semibold text-center bg-gray-50">
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-600">{timingDisplay}</span>
+          </div>
+        </td>
+        {sortedDates.map(date => {
+          const key = `${date}-${timeSlot.start}-${timeSlot.end}`;
+          const cellExams = timetable[key] || [];
+          
+          if (cellExams.length === 0) {
+            return (
+              <td key={`${date}-${index}`} className="border border-gray-300 p-2 text-center min-h-20 bg-white">
+                <div className="text-gray-300">-</div>
+              </td>
+            );
+          }
 
-                          const key = `${date}-${timeSlot.start}-${timeSlot.end}`;
-                          const cellExams = timetable[key] || [];
-                          
-                          if (cellExams.length === 0) {
-                            return (
-                              <td key={`${date}-${index}`} className="border border-gray-300 p-2 text-center min-h-20 bg-white">
-                                <div className="text-gray-300">-</div>
-                              </td>
-                            );
-                          }
-
-                          return (
-                            <td key={`${date}-${index}`} className="border border-gray-300 p-0 text-center">
-                              {cellExams.map(exam => (
-                                <div
-                                  key={exam.id}
-                                  className="text-sm font-bold w-full min-h-20 flex flex-col items-center justify-center p-2"
-                                  style={{ backgroundColor: exam.color }}
-                                >
-                                  <span className="text-gray-800 font-bold">{exam.courseName}</span>
-                                  <span className="text-gray-700 text-xs">{exam.courseCode}</span>
-                                  <span className="text-gray-600 text-xs">Slot: {exam.slot}</span>
-                                  {showClassrooms && (
-                                    <>
-                                      {exam.classroom && (
-                                        <span className="text-gray-600 text-xs">Room: {exam.classroom}</span>
-                                      )}
-                                      {exam.instructor && (
-                                        <span className="text-gray-600 text-xs">{exam.instructor}</span>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              ))}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
+          return (
+            <td key={`${date}-${index}`} className="border border-gray-300 p-0 text-center">
+              {cellExams.map(exam => (
+                <div
+                  key={exam.id}
+                  className="text-sm font-bold w-full min-h-20 flex flex-col items-center justify-center p-2"
+                  style={{ backgroundColor: exam.color }}
+                >
+                  <span className="text-gray-800 font-bold">{exam.courseName}</span>
+                  <span className="text-gray-700 text-xs">{exam.courseCode}</span>
+                  <span className="text-gray-600 text-xs">Slot: {exam.slot}</span>
+                  {showClassrooms && (
+                    <>
+                      {exam.classroom && (
+                        <span className="text-gray-600 text-xs">Room: {exam.classroom}</span>
+                      )}
+                      {exam.instructor && (
+                        <span className="text-gray-600 text-xs">{exam.instructor}</span>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+            </td>
+          );
+        })}
+      </tr>
+    );
+  })}
+</tbody>
               </table>
             </div>
           </div>
