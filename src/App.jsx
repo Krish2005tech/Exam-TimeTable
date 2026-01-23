@@ -274,10 +274,16 @@ const removeNumbersFromKeys = (obj = {}) =>
     }
   };
 
-  const filteredExams = examData.filter(exam => 
-    exam.studentName.toLowerCase().includes(searchTerm.toLowerCase()) 
-    // || exam.rollNo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredExams = [
+  ...new Map(
+    examData
+      .filter(exam =>
+        exam.studentName.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .map(exam => [exam.studentName.toLowerCase(), exam])
+  ).values()
+];
+
   // console.log("Filtered Exams:", filteredExams);
 
   const { sortedDates, timeSlots, timetable } = generateTimetable();
@@ -302,15 +308,43 @@ const removeNumbersFromKeys = (obj = {}) =>
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && searchStudent()}
               className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
-            />
+              />
             <button
               onClick={searchStudent}
               className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition flex items-center gap-2 justify-center"
-            >
+              >
               <Search size={20} /> Search
             </button>
           </div>
 
+          
+                     {searchTerm && filteredExams.length > 0 && searchTerm.length>4 && (
+                                <div className="bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
+                                  {filteredExams.map(exam => {
+                                    // const timeDisplay = exam.schedule && exam.schedule.length > 0
+                                    //   ? `${exam.schedule[0].start}-${exam.schedule[0].end}`
+                                    //   : 'No schedule';
+                    
+                                    return (
+                                      <div
+                                        key={exam.id}
+                                        className="p-4 border-b hover:bg-gray-100 cursor-pointer transition flex justify-between items-center"
+                                        // onClick={() => addCourseToTimetable(exam)}
+                                        onClick={() => searchStudent(exam.rollNo.toLowerCase())}
+                                      >
+                                        <div>
+                                          <p className="font-semibold text-gray-800">{exam.studentName}</p>
+                                          <p className="text-sm text-gray-600">
+                                            {/* {exam.code} • {exam.slot} {exam.credits && `• ${exam.credits} Credits`} {exam.Instructor && `• ${exam.Instructor}`} */}
+                                            {exam.rollNo}
+                                          </p>
+                                        </div>
+                                        <Plus className="text-green-500" size={20} />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
           {studentInfo && (
             <div className="mt-6 p-4 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg">
               <h3 className="font-bold text-gray-800 mb-2">Student Information</h3>
@@ -325,34 +359,6 @@ const removeNumbersFromKeys = (obj = {}) =>
           )}
         </div>
 
-
-           {searchTerm && filteredExams.length > 0 && searchTerm.length>4 && (
-                      <div className="bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
-                        {filteredExams.map(exam => {
-                          // const timeDisplay = exam.schedule && exam.schedule.length > 0
-                          //   ? `${exam.schedule[0].start}-${exam.schedule[0].end}`
-                          //   : 'No schedule';
-          
-                          return (
-                            <div
-                              key={exam.id}
-                              className="p-4 border-b hover:bg-gray-100 cursor-pointer transition flex justify-between items-center"
-                              // onClick={() => addCourseToTimetable(exam)}
-                              onClick={() => searchStudent(exam.rollNo.toLowerCase())}
-                            >
-                              <div>
-                                <p className="font-semibold text-gray-800">{exam.studentName}</p>
-                                <p className="text-sm text-gray-600">
-                                  {/* {exam.code} • {exam.slot} {exam.credits && `• ${exam.credits} Credits`} {exam.Instructor && `• ${exam.Instructor}`} */}
-                                  {exam.rollNo}
-                                </p>
-                              </div>
-                              <Plus className="text-green-500" size={20} />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
 
         {/* Subject List */}
         {studentExams.length > 0 && (
