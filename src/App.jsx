@@ -12,7 +12,7 @@ const ExamTimetableGenerator = () => {
   let [searchTerm, setSearchTerm] = useState('');
   const [studentInfo, setStudentInfo] = useState(null);
   const [editingId, setEditingId] = useState(null);
-  const [showClassrooms, setShowClassrooms] = useState(true);
+  const [showClassrooms, setShowClassrooms] = useState(false);
   const [showModal, showModalState] = useState(false);
   const [clashMessage, setClashMessage] = useState('');
 
@@ -43,6 +43,7 @@ const removeNumbersFromKeys = (obj = {}) =>
       .then((data) => {
         setExamData(data.exams || []);
         setDates(data.dates || {});
+        // console.log(data.dates);
         setSlotTiming(removeNumbersFromKeys(data.slotTiming) || {});
       })
       .catch((error) => {
@@ -176,6 +177,7 @@ const removeNumbersFromKeys = (obj = {}) =>
   const generateTimetable = () => {
   // Get sorted dates
   const sortedDates = Object.keys(dates).sort();
+
   
   // Get unique time slots (regardless of day)
   const uniqueTimeSlotsMap = {};
@@ -199,21 +201,27 @@ const removeNumbersFromKeys = (obj = {}) =>
   sortedDates.forEach(date => {
     timeSlots.forEach(timeSlot => {
       const key = `${date}-${timeSlot.start}-${timeSlot.end}`;
+      // console.log(key)
       timetable[key] = [];
     });
   });
 
   // Fill timetable with exams
   studentExams.forEach(exam => {
+    console.log(exam)
     if (exam.slot && slotTiming[removeNumbers(exam.slot)]) {
 
       const slotInfo = slotTiming[removeNumbers(exam.slot)];
-      const key = `${exam.date}-${slotInfo.start}-${slotInfo.end}`;
+      let idx = dates.indexOf(exam.date);
+      const key = `${idx}-${slotInfo.start}-${slotInfo.end}`;
+      // console.log(key)
       if (timetable[key]) {
         timetable[key].push(exam);
       }
     }
   });
+
+  // console.log(timetable)
 
   return { sortedDates, timeSlots, timetable };
 };
@@ -298,7 +306,7 @@ const removeNumbersFromKeys = (obj = {}) =>
 
         {/* Search Section */}
         <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Search Your Minor Exam Schedule</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Search Your Exam Schedule</h2>
           <div className="flex gap-2 sm:flex-row flex-col">
             <input
               type="text"
@@ -413,7 +421,8 @@ const removeNumbersFromKeys = (obj = {}) =>
                 <thead>
                   <tr className="bg-gray-200">
                     <th className="border border-gray-400 p-3 text-gray-800 font-semibold text-center w-32">Time Slot</th>
-                    {sortedDates.map(date => (
+                    {/* {console.log(sortedDates)} */}
+                    {dates.map(date => (
                       <th key={date} className="border border-gray-400 p-3 text-gray-800 font-semibold text-center">
                         <div className="flex flex-col">
                           <span className="font-bold">{new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
@@ -435,6 +444,7 @@ const removeNumbersFromKeys = (obj = {}) =>
             <span className="text-xs text-gray-600">{timingDisplay}</span>
           </div>
         </td>
+        {/* {console.log(timetable)} */}
         {sortedDates.map(date => {
           const key = `${date}-${timeSlot.start}-${timeSlot.end}`;
           const cellExams = timetable[key] || [];
