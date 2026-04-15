@@ -69,7 +69,7 @@ const removeNumbersFromKeys = (obj = {}) =>
     else{
       studentExamsList = examData.filter(exam => 
         exam.studentName.toLowerCase() === searchTerm.toLowerCase() ||
-        exam.rollNo.toLowerCase() === searchTerm.toLowerCase()
+        exam.rollNo.toUpperCase() === searchTerm.toUpperCase()
       );
   }
 
