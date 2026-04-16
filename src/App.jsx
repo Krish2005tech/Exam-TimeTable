@@ -58,12 +58,13 @@ const removeNumbersFromKeys = (obj = {}) =>
     searchTerm=searchTerm.trim();
     let studentExamsList={};
     if(Roll_from_name_search !== ""){
-
+      // console.log(Roll_from_name_search,searchTerm)
       studentExamsList = examData.filter(exam => 
         // exam.studentName.toLowerCase() === searchTerm.toLowerCase() ||
-        exam.rollNo.toLowerCase() === Roll_from_name_search
+        exam.rollNo.toLowerCase() === searchTerm.toLowerCase()
       );
       // filteredExams={}
+      // console.log(studentExamsList)
       setSearchTerm("")
     }
     else{
@@ -208,7 +209,7 @@ const removeNumbersFromKeys = (obj = {}) =>
 
   // Fill timetable with exams
   studentExams.forEach(exam => {
-    console.log(exam)
+    // console.log(exam)
     if (exam.slot && slotTiming[removeNumbers(exam.slot)]) {
 
       const slotInfo = slotTiming[removeNumbers(exam.slot)];
@@ -338,7 +339,7 @@ const removeNumbersFromKeys = (obj = {}) =>
                                         key={exam.id}
                                         className="p-4 border-b hover:bg-gray-100 cursor-pointer transition flex justify-between items-center"
                                         // onClick={() => addCourseToTimetable(exam)}
-                                        onClick={() => searchStudent(exam.rollNo.toLowerCase())}
+                                        onClick={() => searchStudent(exam.rollNo.toUpperCase())}
                                       >
                                         <div>
                                           <p className="font-semibold text-gray-800">{exam.studentName}</p>
