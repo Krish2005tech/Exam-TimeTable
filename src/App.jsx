@@ -434,7 +434,8 @@ const removeNumbersFromKeys = (obj = {}) =>
               </div>
             </div>
             <div ref={timetableRef} className="bg-white">
-              <table className="w-full border-collapse">
+              {/* <table className="w-full border-collapse"> */}
+              <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
                 <thead>
                   <tr className="bg-gray-200">
                     <th className="border border-gray-400 p-3 text-gray-800 font-semibold text-center w-32">Time Slot</th>
@@ -474,31 +475,60 @@ const removeNumbersFromKeys = (obj = {}) =>
             );
           }
 
+          // return (
+          //   <td key={`${date}-${index}`} className="border border-gray-300 p-0 text-center">
+          //     {cellExams.map(exam => (
+          //       <div
+          //         key={exam.id}
+          //         className="text-sm font-bold w-full min-h-20 flex flex-col items-center justify-center p-2"
+          //         style={{ backgroundColor: exam.color }}
+          //       >
+          //         <span className="text-gray-800 font-bold">{exam.courseName}</span>
+          //         {/* <span className="text-gray-700 text-xs">{exam.courseCode}</span> */}
+          //         {/* <span className="text-gray-600 text-xs">Slot: {exam.slot}</span> */}
+          //         {showClassrooms && (
+          //           <>
+          //             {exam.classroom && (
+          //               <span className="text-gray-600 text-xs">Room: {exam.classroom}</span>
+          //             )}
+          //             {!exam.classroom && (
+          //               <span className="text-gray-600 text-xs">Not Finalised Yet</span>
+          //             )}
+          //           </>
+          //         )}
+          //       </div>
+          //     ))}
+          //   </td>
+          // );
           return (
-            <td key={`${date}-${index}`} className="border border-gray-300 p-0 text-center">
-              {cellExams.map(exam => (
-                <div
-                  key={exam.id}
-                  className="text-sm font-bold w-full min-h-20 flex flex-col items-center justify-center p-2"
-                  style={{ backgroundColor: exam.color }}
-                >
-                  <span className="text-gray-800 font-bold">{exam.courseName}</span>
-                  {/* <span className="text-gray-700 text-xs">{exam.courseCode}</span> */}
-                  {/* <span className="text-gray-600 text-xs">Slot: {exam.slot}</span> */}
-                  {showClassrooms && (
-                    <>
-                      {exam.classroom && (
-                        <span className="text-gray-600 text-xs">Room: {exam.classroom}</span>
-                      )}
-                      {!exam.classroom && (
-                        <span className="text-gray-600 text-xs">Not Finalised Yet</span>
-                      )}
-                    </>
-                  )}
-                </div>
-              ))}
-            </td>
-          );
+  <td key={`${date}-${index}`} className="border border-gray-300 p-0 text-center align-top">
+    {cellExams.map(exam => (
+      <div
+        key={exam.id}
+        className="w-full flex flex-col items-center justify-center gap-1 p-2 text-center"
+        style={{ backgroundColor: exam.color, minHeight: '5rem' }}
+      >
+        <span className="block w-full shrink-0 text-sm font-bold leading-snug text-gray-800 break-words">
+          {exam.courseName}
+        </span>
+        {showClassrooms && (
+          <>
+            {exam.classroom && (
+              <span className="block w-full shrink-0 text-xs leading-snug text-gray-600 break-words">
+                Room: {exam.classroom}
+              </span>
+            )}
+            {!exam.classroom && (
+              <span className="block w-full shrink-0 text-xs leading-snug text-gray-600">
+                Not Finalised Yet
+              </span>
+            )}
+          </>
+        )}
+      </div>
+    ))}
+  </td>
+);
         })}
       </tr>
     );
