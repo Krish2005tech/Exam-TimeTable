@@ -413,7 +413,13 @@ const removeNumbersFromKeys = (obj = {}) =>
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 overflow-x-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800">Exam Schedule</h2>
-              <div className="flex gap-2">
+              <div className="flex gap-2 ml-1">
+                <button
+                  onClick={exportToPNG}
+                  className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition"
+                >
+                  <Download size={20} /> Export as PNG
+                </button>
                 <button
                   onClick={() => setShowClassrooms(!showClassrooms)}
                   className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
@@ -425,17 +431,17 @@ const removeNumbersFromKeys = (obj = {}) =>
                   {showClassrooms ? <EyeOff size={20} /> : <Eye size={20} />}
                   {showClassrooms ? 'Hide Venue' : 'Show Venue'}
                 </button>
-                <button
-                  onClick={exportToPNG}
-                  className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition"
-                >
-                  <Download size={20} /> Export as PNG
-                </button>
               </div>
             </div>
             <div ref={timetableRef} className="bg-white">
               {/* <table className="w-full border-collapse"> */}
-              <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+              <table
+                className="w-full border-collapse"
+                style={{
+                  tableLayout: 'fixed',
+                  minWidth: `${128 + dates.length * 134}px`, // 128px time column + 140px per date
+                }}
+              >
                 <thead>
                   <tr className="bg-gray-200">
                     <th className="border border-gray-400 p-3 text-gray-800 font-semibold text-center w-32">Time Slot</th>
