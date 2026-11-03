@@ -9,7 +9,7 @@ const ExamTimetableGenerator = () => {
   const [dates, setDates] = useState({});
   const [slotTiming, setSlotTiming] = useState({});
   const [studentExams, setStudentExams] = useState([]);
-  let [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [studentInfo, setStudentInfo] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [showClassrooms, setShowClassrooms] = useState(false);
@@ -53,26 +53,42 @@ const removeNumbersFromKeys = (obj = {}) =>
       });
   }, []);
 
-  const searchStudent = (Roll_from_name_search="") => {
-    if (!searchTerm.trim()) return;
-    searchTerm=searchTerm.trim();
-    let studentExamsList={};
-    if(Roll_from_name_search !== ""){
-      // console.log(Roll_from_name_search,searchTerm)
-      studentExamsList = examData.filter(exam => 
-        // exam.studentName.toLowerCase() === searchTerm.toLowerCase() ||
-        exam.rollNo.toLowerCase() === searchTerm.toLowerCase()
+  const searchStudent = (rollFromSuggestion = "") => {
+    // The Search button used to pass the click event here, so only treat real strings as a roll number
+    const isSuggestion = typeof rollFromSuggestion === "string" && rollFromSuggestion !== "";
+    const term = searchTerm.trim();
+    if (!isSuggestion && !term) return;
+
+    let studentExamsList = [];
+    if (isSuggestion) {
+      // Clicked a suggestion: match on the roll number that was passed in (not the typed name)
+      const roll = rollFromSuggestion.trim().toUpperCase();
+      studentExamsList = examData.filter(exam => exam.rollNo.toUpperCase() === roll);
+      setSearchTerm("");
+    } else {
+      const lower = term.toLowerCase();
+      studentExamsList = examData.filter(exam =>
+        exam.studentName.toLowerCase() === lower ||
+        exam.rollNo.toUpperCase() === term.toUpperCase()
       );
-      // filteredExams={}
-      // console.log(studentExamsList)
-      setSearchTerm("")
+
+      // No exact match: accept a partial name if it identifies exactly one student
+      if (studentExamsList.length === 0) {
+        studentExamsList = examData.filter(exam =>
+          exam.studentName.toLowerCase().includes(lower)
+        );
+      }
     }
-    else{
-      studentExamsList = examData.filter(exam => 
-        exam.studentName.toLowerCase() === searchTerm.toLowerCase() ||
-        exam.rollNo.toUpperCase() === searchTerm.toUpperCase()
-      );
-  }
+
+    // More than one student matched (e.g. same name): ask the user to pick from the suggestions
+    const matchedRolls = new Set(studentExamsList.map(exam => exam.rollNo));
+    if (matchedRolls.size > 1) {
+      setStudentInfo(null);
+      setStudentExams([]);
+      showModalState(true);
+      setClashMessage("Multiple students match this name. Please pick one from the suggestions below the search box, or search by roll number.");
+      return;
+    }
 
     if (studentExamsList.length > 0) {
       const student = studentExamsList[0];
@@ -287,9 +303,9 @@ const removeNumbersFromKeys = (obj = {}) =>
   ...new Map(
     examData
       .filter(exam =>
-        exam.studentName.toLowerCase().includes(searchTerm.toLowerCase())
+        exam.studentName.toLowerCase().includes(searchTerm.trim().toLowerCase())
       )
-      .map(exam => [exam.studentName.toLowerCase(), exam])
+      .map(exam => [exam.rollNo, exam])
   ).values()
 ];
 
@@ -319,7 +335,7 @@ const removeNumbersFromKeys = (obj = {}) =>
               className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none"
               />
             <button
-              onClick={searchStudent}
+              onClick={() => searchStudent()}
               className="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-8 py-3 rounded-lg font-semibold hover:shadow-lg transition flex items-center gap-2 justify-center"
               >
               <Search size={20} /> Search
@@ -327,7 +343,7 @@ const removeNumbersFromKeys = (obj = {}) =>
           </div>
 
           
-                     {searchTerm && filteredExams.length > 0 && searchTerm.length>4 && (
+                     {searchTerm.trim().length >= 3 && filteredExams.length > 0 && (
                                 <div className="bg-gray-50 rounded-lg max-h-60 overflow-y-auto">
                                   {filteredExams.map(exam => {
                                     // const timeDisplay = exam.schedule && exam.schedule.length > 0
@@ -336,7 +352,7 @@ const removeNumbersFromKeys = (obj = {}) =>
                     
                                     return (
                                       <div
-                                        key={exam.id}
+                                        key={exam.rollNo}
                                         className="p-4 border-b hover:bg-gray-100 cursor-pointer transition flex justify-between items-center"
                                         // onClick={() => addCourseToTimetable(exam)}
                                         onClick={() => searchStudent(exam.rollNo.toUpperCase())}
@@ -474,7 +490,7 @@ const removeNumbersFromKeys = (obj = {}) =>
                       {exam.classroom && (
                         <span className="text-gray-600 text-xs">Room: {exam.classroom}</span>
                       )}
-                      {exam.instructor && (
+                      {!exam.classroom && (
                         <span className="text-gray-600 text-xs">Not Finalised Yet</span>
                       )}
                     </>
