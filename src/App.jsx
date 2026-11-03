@@ -12,7 +12,7 @@ const ExamTimetableGenerator = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [studentInfo, setStudentInfo] = useState(null);
   const [editingId, setEditingId] = useState(null);
-  const [showClassrooms, setShowClassrooms] = useState(false);
+  const [showClassrooms, setShowClassrooms] = useState(true);
   const [showModal, showModalState] = useState(false);
   const [clashMessage, setClashMessage] = useState('');
 
@@ -515,7 +515,7 @@ const removeNumbersFromKeys = (obj = {}) =>
           <>
             {exam.classroom && (
               <span className="block w-full shrink-0 text-xs leading-snug text-gray-600 break-words">
-                Room: {exam.classroom}
+                {exam.classroom}
               </span>
             )}
             {!exam.classroom && (
